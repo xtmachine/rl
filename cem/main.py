@@ -74,7 +74,7 @@ def make_policy(theta):
         raise NotImplementedError
 
 # Task settings:
-env = gym.make('CartPole-v0') # Change as needed
+env = gym.make('Pendulum-v0') # Change as needed
 num_steps = 500 # maximum length of episode
 # Alg settings:
 n_iter = 100 # number of iterations of CEM
@@ -93,18 +93,22 @@ theta_mean = np.zeros(dim_theta)
 theta_std = np.ones(dim_theta)
 
 # Now, for the algorithm
+env.monitor.start('/tmp/pendulum', force = True)		
+
 for iteration in xrange(n_iter):
     # Sample parameter vectors
-    thetas = YOUR_CODE_HERE
+    thetas = np.random.normal(theta_mean, theta_std, (batch_size, dim_theta))
     rewards = [noisy_evaluation(theta) for theta in thetas]
     # Get elite parameters
     n_elite = int(batch_size * elite_frac)
     elite_inds = np.argsort(rewards)[batch_size - n_elite:batch_size]
     elite_thetas = [thetas[i] for i in elite_inds]
     # Update theta_mean, theta_std
-    theta_mean = YOUR_CODE_HERE
-    theta_std = YOUR_CODE_HERE
+    theta_mean = np.mean(elite_thetas, axis = 0)
+    theta_std = np.std(elite_thetas, axis = 0)
     print "iteration %i. mean f: %8.3g. max f: %8.3g"%(iteration, np.mean(rewards), np.max(rewards))
     do_episode(make_policy(theta_mean), env, num_steps, render=True)
 
+env.monitor.close()
 
+gym.upload('/tmp/pendulum', api_key='API_KEY ')
